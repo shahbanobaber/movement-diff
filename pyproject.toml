@@ -1,0 +1,30 @@
+[project]
+name = "movediff"
+version = "0.1.0"
+description = "Measure how one person's movement changes between conditions, by phase, from ordinary video."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Shahbano Baber" }]
+dependencies = [
+    "mediapipe>=0.10.14",
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+movediff = "movediff.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["movediff"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
