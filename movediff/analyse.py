@@ -36,8 +36,11 @@ def analyse(
     if len(unit) > 1:
         raise SystemExit(f"sessions were scaled differently ({unit}); re-run segment with the same --scale")
     unit = unit.pop()
-    units = "cm" if unit_cm else f"{unit} lengths"
-    factor = unit_cm or 1.0
+    if unit in ("torso", "arm"):  # body-scaled video data
+        units = "cm" if unit_cm else f"{unit} lengths"
+        factor = unit_cm or 1.0
+    else:  # imported data already in a physical unit
+        units, factor = unit, 1.0
     effector = effector or reps["baseline"].effector
 
     conds, aligner, joints = build_conditions(reps, effector, L, align_on, band, factor)
@@ -62,10 +65,21 @@ def analyse(
 
     cmp = {label: compare(ref, other, masks, rng, n_perm, n_boot) for label, ref, other in pairs}
 
+    # A 0-100% timeline assumes both conditions are the same movement. If one
+    # takes much longer, the same % is a different moment in each, and shifts
+    # can appear before anything changed. Real VR data showed this (validation/).
+    dur_ratio = float(np.median(test.duration) / np.median(conds["baseline"].duration))
+    duration_warning = None
+    if align_on != "onset" and not 0.8 <= dur_ratio <= 1.25:
+        duration_warning = (f"Test reps take {dur_ratio:.2f}x as long as baseline reps. On a 0-100% timeline the "
+                            "same % is a different moment in each, so shifts can show up before anything "
+                            "changed. Re-run with --align-on onset to compare at the same milliseconds.")
+        print("WARNING: " + duration_warning)
+
     # Cross-check: the same comparison with linear 0-100% time and no DTW. If
     # the two agree, the shift is in the path. If the linear shift is much
     # bigger, part of it is the movement's timing, which the warp removed.
-    if align_on != "none":
+    if align_on not in ("none", "onset"):
         lin, _, _ = build_conditions(reps, effector, L, "none", band, factor)
         cmp["test vs baseline"]["linear"] = compare(lin["baseline"], lin["test"], masks, rng, n_perm, 10)
     spread = {k: spread_with_ci(conds[k], masks, rng, n_boot) for k in order}
@@ -76,6 +90,8 @@ def analyse(
         joints=joints, effector=effector, units=units, phases=dict(zip(names, _edges(bounds), strict=True)),
         align_on=align_on, band=band, samples=L, n_perm=n_perm, n_boot=n_boot, seed=seed,
         baseline_peak_speed_at=float(np.median(conds["baseline"].t_peak)),
+        duration_ratio=dur_ratio, duration_warning=duration_warning,
+        timeline_ms=round(1000 * aligner.span_s, 1) if align_on == "onset" else None,
     )
 
     out_dir = Path(out_dir)
@@ -85,7 +101,9 @@ def analyse(
     (out_dir / "metrics.json").write_text(json.dumps(result, indent=1))
     (out_dir / "summary.md").write_text(_summary(result, cmp, joints, names, effector, units))
 
-    plots.plot_shift(cmp, joints, list(bounds), list(names), units, out_dir / "shift_by_phase.png")
+    xlabel = (f"% of the first {1000 * aligner.span_s:.0f} ms after movement onset" if align_on == "onset"
+              else "% of movement, on the baseline timeline")
+    plots.plot_shift(cmp, joints, list(bounds), list(names), units, out_dir / "shift_by_phase.png", xlabel)
     plots.plot_spread(spread, joints, list(names), units, out_dir / "spread_by_condition.png")
     plots.plot_trials(trials, effector, units, out_dir / "trials.png")
     plots.plot_speed(conds, effector, units, out_dir / "speed_profile.png")
@@ -152,6 +170,9 @@ def _summary(result, cmp, joints, names, effector, units) -> str:
         + f". Baseline reps reach peak {effector} speed at {s['baseline_peak_speed_at']:.0%} of their duration "
         "(median), a useful landmark when choosing phase boundaries.",
         "",
+        *([f"**Warning.** {s['duration_warning']}", ""] if s.get("duration_warning") else []),
+        *([f"Timeline: milliseconds from movement onset, 0 to {s['timeline_ms']:.0f} ms; phases are "
+           "fractions of that.", ""] if s.get("timeline_ms") else []),
         "p-values are permutation tests across this person's reps "
         f"({s['n_perm']} shuffles), uncorrected for the number of cells.",
         "",

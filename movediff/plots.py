@@ -83,7 +83,8 @@ def plot_segmentation(diag, reps_name: str, path: Path) -> None:
     plt.close(fig)
 
 
-def plot_shift(cmp: dict, joints, bounds, names, units, path: Path) -> None:
+def plot_shift(cmp: dict, joints, bounds, names, units, path: Path,
+               xlabel: str = "% of movement, on the baseline timeline") -> None:
     """Where in the movement each condition's mean moved away from the baseline mean."""
     _style()
     keys = [k for k in ("practice vs baseline", "test vs baseline") if k in cmp]
@@ -105,7 +106,7 @@ def plot_shift(cmp: dict, joints, bounds, names, units, path: Path) -> None:
         ax.set_xticks([0, 25, 50, 75, 100])
     _end_labels(axes[-1], [(cmp[k]["shift_curve"][-1, -1], k.split(" vs ")[0]) for k in keys], 100)
     axes[0].set_ylabel(f"distance from baseline mean ({units})")
-    fig.supxlabel("% of movement, on the baseline timeline", color=INK2, fontsize=9.5)
+    fig.supxlabel(xlabel, color=INK2, fontsize=9.5)
     h, lab = axes[0].get_legend_handles_labels()
     fig.legend(h, lab, loc="upper right", ncol=len(lab), fontsize=8.5, bbox_to_anchor=(1.0, 1.0))
     fig.suptitle("Shift: how far the mean movement moved from baseline", x=0.01, ha="left", fontsize=11)

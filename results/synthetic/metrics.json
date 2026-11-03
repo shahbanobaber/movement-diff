@@ -37,7 +37,10 @@
   "n_perm": 2000,
   "n_boot": 2000,
   "seed": 0,
-  "baseline_peak_speed_at": 0.47619047619047616
+  "baseline_peak_speed_at": 0.47619047619047616,
+  "duration_ratio": 1.119047619047619,
+  "duration_warning": null,
+  "timeline_ms": null
  },
  "comparisons": {
   "practice vs baseline": {

@@ -1,0 +1,36 @@
+{
+ "participant": "P1",
+ "source": "Furmanek et al. 2022, Sci Data 9:23, CC0",
+ "timing": [
+  {
+   "jump_ms": 100,
+   "n_jump": 15,
+   "n_near": 89,
+   "raw_ms": 410.0,
+   "tool_onset_ms": 376.3730337078655,
+   "tool_dtw_ms": 63.101123595505626,
+   "duration_near_ms": 540.0,
+   "duration_jump_ms": 909.9999999999999
+  },
+  {
+   "jump_ms": 200,
+   "n_jump": 14,
+   "n_near": 89,
+   "raw_ms": 490.0,
+   "tool_onset_ms": 473.5730337078656,
+   "tool_dtw_ms": 68.48314606741575,
+   "duration_near_ms": 540.0,
+   "duration_jump_ms": 1010.0
+  },
+  {
+   "jump_ms": 300,
+   "n_jump": 16,
+   "n_near": 89,
+   "raw_ms": 570.0,
+   "tool_onset_ms": 554.5730337078656,
+   "tool_dtw_ms": 143.8314606741573,
+   "duration_near_ms": 540.0,
+   "duration_jump_ms": 1190.0
+  }
+ ]
+}

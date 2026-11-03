@@ -1,4 +1,4 @@
-"""Command line: python -m movediff {extract,segment,analyse,demo} ..."""
+"""Command line: python -m movediff {extract,segment,import,analyse,demo} ..."""
 
 from __future__ import annotations
 
@@ -51,6 +51,15 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--drop", type=_ints, default=(), help="candidate numbers to drop, as shown on the plot")
     p.add_argument("--expect", type=int, help="warn if the number of reps differs")
 
+    p = sub.add_parser("import", help="CSV of positions (headset, mocap, tablet) -> per-rep trajectories")
+    p.add_argument("csv", type=Path, help="columns: condition,trial,t,joint,x,y (t in seconds)")
+    p.add_argument("--unit", required=True, help="unit of x and y, e.g. cm")
+    p.add_argument("--out-dir", type=Path, default=Path("trajectories"))
+    p.add_argument("--effector", help="joint that defines the movement (default: first joint in the file)")
+    p.add_argument("--no-cut", action="store_true", help="trials already start and end with the movement")
+    p.add_argument("--onset-frac", type=float, default=0.1)
+    p.add_argument("--cutoff", type=float, help="optional low-pass cutoff in Hz")
+
     p = sub.add_parser("analyse", help="compare sessions -> metrics.json, summary.md, figures")
     p.add_argument("--baseline", type=Path, required=True)
     p.add_argument("--test", type=Path, required=True)
@@ -59,7 +68,9 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--effector", help="joint for the endpoint, speed and summary tables (default: from segment)")
     p.add_argument("--phases", type=_floats, default=(1 / 3, 2 / 3), help="phase boundaries, e.g. 0.33,0.67")
     p.add_argument("--phase-names", type=_csv, default=("early", "mid", "late"))
-    p.add_argument("--align-on", choices=("velocity", "speed", "position", "none"), default="velocity")
+    p.add_argument("--align-on", choices=("velocity", "speed", "position", "none", "onset"), default="velocity",
+                   help="velocity = DTW (default); onset = compare at the same ms after onset, for conditions "
+                        "that differ a lot in duration")
     p.add_argument("--band", type=float, default=0.1, help="DTW warping limit, fraction of the movement")
     p.add_argument("--unit-cm", type=float, help="your measured scale length in cm (shoulder to hip for torso)")
     p.add_argument("--n-perm", type=int, default=2000)
@@ -84,6 +95,11 @@ def main(argv: list[str] | None = None) -> None:
                  centre=a.centre, scale=a.scale, stroke=a.stroke, flip=a.flip, cutoff=a.cutoff,
                  min_peak=a.min_peak, onset_frac=a.onset_frac, pad_before_s=a.pad_before,
                  pad_after_s=a.pad_after, start_s=a.start, end_s=a.end, drop=a.drop)
+    elif a.cmd == "import":
+        from .tabular import import_csv
+
+        import_csv(a.csv, a.out_dir, unit=a.unit, effector=a.effector, cut=not a.no_cut,
+                   onset_frac=a.onset_frac, cutoff=a.cutoff)
     elif a.cmd == "analyse":
         from .analyse import analyse
 

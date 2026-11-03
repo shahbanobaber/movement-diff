@@ -25,7 +25,7 @@ Motion capture can measure whole movements too, but it needs a lab. movement-dif
 
 ## How it works
 
-1. **Pose.** MediaPipe marks shoulder, elbow, wrist and finger in every frame, on a laptop CPU.
+1. **Pose.** MediaPipe marks shoulder, elbow, wrist and finger in every frame, on a laptop CPU. If positions already come from a headset, motion capture or a tablet, `movediff import` reads them from a CSV and this step is skipped.
 2. **Reps.** Wrist speed is used to cut the video into reps. Positions are measured from the shoulder and scaled by torso length, so where the person sat doesn't matter.
 3. **Alignment.** No two reps take the same time. Dynamic time warping lines them up so the same moment of the movement is compared across reps.
 4. **Comparison.** At each point along the movement it computes shift and spread against baseline, plus endpoint, movement time and speed. Each number is checked against a noise floor from 2000 label shuffles, so differences that luck alone would produce aren't reported as findings.
@@ -49,6 +49,22 @@ The last row is the point. A score based on where the reach ends sees nothing, y
 
 Testing also chose the alignment method and caught three bugs that would have produced false results on real data. One example: aligning reps by position hides a reach that stops short, which is exactly the VR depth case. Details are in [validation/](validation/).
 
+## On real VR data
+
+A simulated arm only shows the method recovers what I planted. To check it on real people, I used a public dataset (Furmanek et al., 2022, CC0). People reached for a virtual object in an Oculus Rift while their hand was tracked by motion capture. On some reaches, the object jumped from 20 cm to 40 cm away at a set moment.
+
+Because the jump time is known, the answer is too. The jumped reaches should match normal reaches until after the jump, then pull away. The table compares the tool with a plain analysis of the raw data, which uses no alignment at all. Data is from one participant: 89 normal reaches and 14 to 16 jumped reaches per jump time.
+
+| Object jumped at | Raw data separates at | Tool, `--align-on onset` | Tool, default DTW |
+|---|---|---|---|
+| 100 ms | 410 ms | 376 ms | 63 ms |
+| 200 ms | 490 ms | 474 ms | 68 ms |
+| 300 ms | 570 ms | 555 ms | 144 ms |
+
+![When the shift rises above noise for each jump time](results/furmanek2022/P1/timing.png)
+
+Comparing reps at the same milliseconds after onset gets the timing right, within 35 ms of the raw data, and in the right order. The default does not. Jumped reaches took twice as long as normal ones, so on a 0-100% timeline the same percentage is a different moment in each, and the tool reported a change before the object had moved. The simulated arm never showed this because its conditions differed by only 15% in duration. The tool now warns when durations differ by more than 25% and points to `--align-on onset`.
+
 ## The experiment
 
 One person, three blocks, filmed side-on:
@@ -59,7 +75,7 @@ One person, three blocks, filmed side-on:
 
 If test differs from baseline, the arm kept something it learned from the wrong view. This is a known effect in motor adaptation research (Krakauer & Mazzoni, 2011), which makes it a good check of whether the tool can find a real change inside a movement. The full protocol is in [PROTOCOL.md](PROTOCOL.md).
 
-## Results on real video
+## Results from the experiment
 
 Pending.
 
@@ -83,6 +99,15 @@ python -m movediff analyse --baseline trajectories/baseline.reps.npz \
 
 Check the segmentation plots in `trajectories/` before analysing. `--unit-cm` is your measured shoulder-to-hip length. Each command takes `--help`.
 
+From a CSV of positions instead, with columns `condition,trial,t,joint,x,y`:
+
+```bash
+python -m movediff import positions.csv --unit cm --effector wrist
+python -m movediff analyse --baseline trajectories/<a>.reps.npz --test trajectories/<b>.reps.npz
+```
+
+To rerun the real-data check, download `Small_Subset.zip` from the [dataset page](https://doi.org/10.6084/m9.figshare.13377506.v2), unzip it into `data/furmanek2022/`, and run `python validation/furmanek2022.py data/furmanek2022/Small_Subset/Dist_Pert/P1`.
+
 ## Limits
 
 - **One person, no ethics approval.** This is a tool, not a study. The statistics say whether this person's movement changed, not whether people's would.
@@ -91,12 +116,14 @@ Check the segmentation plots in `trajectories/` before analysing. `--unit-cm` is
 - **No control block yet.** Practice or fatigue could explain a difference. The protocol includes a control.
 - **Many comparisons, uncorrected p-values.** The protocol fixes one primary measure before recording.
 - **The simulation tests the method, not the tracking.** It can't show that MediaPipe follows a real arm well. The overlay video is the check for that.
+- **The timeline depends on the comparison.** DTW suits two versions of the same movement. When one condition takes much longer, use `--align-on onset`. The real-data check covers one participant and one kind of change.
 
 ## References
 
 - Barrera Machuca, M., & Stuerzlinger, W. (2019). The effect of stereo display deficiencies on virtual hand pointing. *Proceedings of the CHI Conference on Human Factors in Computing Systems*.
 - Bazarevsky, V., et al. (2020). BlazePose: On-device real-time body pose tracking. arXiv:2006.10204.
 - Flash, T., & Hogan, N. (1985). The coordination of arm movements: an experimentally confirmed mathematical model. *Journal of Neuroscience*, 5(7), 1688-1703.
+- Furmanek, M. P., Mangalam, M., Yarossi, M., Lockwood, K., & Tunik, E. (2022). A kinematic and EMG dataset of online adjustment of reach-to-grasp movements to visual perturbations. *Scientific Data*, 9, 23.
 - Keogh, E. J., & Pazzani, M. J. (2001). Derivative dynamic time warping. *SIAM International Conference on Data Mining*.
 - Krakauer, J. W., & Mazzoni, P. (2011). Human sensorimotor learning: adaptation, skill, and beyond. *Current Opinion in Neurobiology*, 21(4), 636-644.
 - Sakoe, H., & Chiba, S. (1978). Dynamic programming algorithm optimization for spoken word recognition. *IEEE Transactions on Acoustics, Speech, and Signal Processing*, 26(1), 43-49.

@@ -117,8 +117,26 @@ def build_conditions(reps_by_name: dict, effector: str, L: int, align_on: str, b
             raise SystemExit(f"{r.name}: joints {r.joints} differ from baseline {joints}")
     e = joints.index(effector)
 
-    resampled = {k: [resample(r.rep(i) * factor, L) for i in range(len(r))] for k, r in reps_by_name.items()}
-    aligner = Aligner(resampled["baseline"], mode=align_on, band_frac=band, refine=refine)
+    if align_on == "onset":
+        # Clock time from movement onset, not % of the movement. Every rep is
+        # read at the same milliseconds, up to the median baseline duration;
+        # a rep that has already ended holds its final position.
+        base = reps_by_name["baseline"]
+        span = float(np.median((base.lengths - 1) / base.fps))
+        grid = np.linspace(0, span, L)
+
+        def on_clock(traj, fps):
+            flat = traj.reshape(len(traj), -1)
+            t = np.arange(len(traj)) / fps
+            return np.column_stack([np.interp(grid, t, flat[:, k]) for k in range(flat.shape[1])]
+                                   ).reshape((L,) + traj.shape[1:])
+
+        resampled = {k: [on_clock(r.rep(i) * factor, r.fps) for i in range(len(r))] for k, r in reps_by_name.items()}
+        aligner = Aligner(resampled["baseline"], mode="none")
+        aligner.span_s = span
+    else:
+        resampled = {k: [resample(r.rep(i) * factor, L) for i in range(len(r))] for k, r in reps_by_name.items()}
+        aligner = Aligner(resampled["baseline"], mode=align_on, band_frac=band, refine=refine)
 
     conds = {}
     for k, r in reps_by_name.items():
