@@ -119,10 +119,10 @@ def build_conditions(reps_by_name: dict, effector: str, L: int, align_on: str, b
 
     if align_on == "onset":
         # Clock time from movement onset, not % of the movement. Every rep is
-        # read at the same milliseconds, up to the median baseline duration;
-        # a rep that has already ended holds its final position.
-        base = reps_by_name["baseline"]
-        span = float(np.median((base.lengths - 1) / base.fps))
+        # read at the same milliseconds, up to the longest median duration of
+        # any condition, so a late correction still falls inside the window.
+        # A rep that has already ended holds its final position.
+        span = max(float(np.median((r.lengths - 1) / r.fps)) for r in reps_by_name.values())
         grid = np.linspace(0, span, L)
 
         def on_clock(traj, fps):

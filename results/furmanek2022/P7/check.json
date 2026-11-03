@@ -1,0 +1,44 @@
+{
+ "participant": "P7",
+ "timing": [
+  {
+   "jump_ms": 100,
+   "n_near": 80,
+   "n_jump": 11,
+   "raw": 450.0,
+   "given": 447.2000000000004,
+   "own": 369.90000000000026,
+   "dtw": 247.45875,
+   "duration_near_ms": 570.0000000000001,
+   "duration_jump_ms": 960.0
+  },
+  {
+   "jump_ms": 200,
+   "n_near": 80,
+   "n_jump": 12,
+   "raw": 530.0,
+   "given": 526.4000000000004,
+   "own": 454.1000000000003,
+   "dtw": 235.90625,
+   "duration_near_ms": 570.0000000000001,
+   "duration_jump_ms": 980.0000000000001
+  },
+  {
+   "jump_ms": 300,
+   "n_near": 80,
+   "n_jump": 12,
+   "raw": 620.0,
+   "given": 616.2000000000005,
+   "own": 573.3000000000005,
+   "dtw": 230.13,
+   "duration_near_ms": 570.0000000000001,
+   "duration_jump_ms": 1094.9999999999998
+  }
+ ],
+ "null_splits": 20,
+ "null_fired": {
+  "raw": 0,
+  "own": 0
+ },
+ "source": "Furmanek et al. 2022, Sci Data 9:23, CC0"
+}

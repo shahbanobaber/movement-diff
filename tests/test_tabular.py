@@ -51,6 +51,27 @@ def test_import_cuts_out_the_movement(tmp_path):
     assert np.allclose(travel, 20, atol=2)
 
 
+def test_onset_does_not_depend_on_a_later_correction(tmp_path):
+    # Both conditions start the same way. The second adds a large, fast
+    # correction, so its peak speed is about 2.5x higher. A threshold scaled to
+    # each trial's own peak would put its onset about 30 ms later.
+    rng = np.random.default_rng(2)
+    _write(tmp_path / "pos.csv", {"base": [_trial(rng, 20) for _ in range(10)],
+                                  "jump": [_trial(rng, 20, extra=30, jump_s=0.3, fix=0.4) for _ in range(10)]})
+    paths = import_csv(tmp_path / "pos.csv", tmp_path / "out", unit="cm", effector="wrist")
+    base, jump = Reps.load(paths["base"]), Reps.load(paths["jump"])
+    assert abs(jump.onset_t.mean() - base.onset_t.mean()) < 0.01
+
+
+def test_onset_at_zero_uses_the_given_clock(tmp_path):
+    rng = np.random.default_rng(3)
+    trials = [_trial(rng, 20) for _ in range(5)]
+    _write(tmp_path / "pos.csv", {"base": [(t - 0.4, p) for t, p in trials]})  # movement starts at t=0
+    paths = import_csv(tmp_path / "pos.csv", tmp_path / "out", unit="cm", effector="wrist", onset_at_zero=True)
+    reps = Reps.load(paths["base"])
+    assert np.allclose(reps.onset_t, 0, atol=0.006) and np.all(reps.offset_t > 0.5)
+
+
 def test_onset_timeline_finds_a_change_after_it_happens(tmp_path):
     # Same reach until 0.3 s, then the test trials extend 15 cm further and
     # take longer. On clock time the shift must start after 0.3 s.

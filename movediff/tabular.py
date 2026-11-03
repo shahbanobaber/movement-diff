@@ -9,9 +9,11 @@ so the pose and normalisation steps are skipped. The input is one long CSV:
     ...
 
 t is in seconds and x, y are in any unit you name with --unit. Each trial
-can include rest before and after the movement. The movement is cut out with
-the same rule the video path uses (speed along the main direction crossing
-10% of its peak), unless you pass --no-cut.
+can include rest before and after the movement. The movement is cut out where
+speed along its main direction crosses one threshold, 10% of the median peak
+speed over every trial in the file. If t=0 already marks movement onset (a
+start switch, a logged event), --onset-at-zero uses it and only the end is
+found. --no-cut keeps whole trials.
 """
 
 from __future__ import annotations
@@ -26,35 +28,84 @@ from .segment import Reps, _bounds
 from .signal import lowpass, to_uniform
 
 
-def cut_trial(traj: np.ndarray, fps: float, e: int, onset_frac: float = 0.1) -> tuple[int, int] | None:
-    """Onset and offset of the one movement in a trial, or None if it runs off either end."""
+def _prepare(t, traj, cutoff):
+    t, traj, fps = to_uniform(np.asarray(t, float), np.asarray(traj, float))
+    if np.isnan(traj).any():
+        return None
+    return t, lowpass(traj, fps, cutoff), fps
+
+
+def main_axis_speed(traj: np.ndarray, fps: float, e: int, onset_frac: float = 0.1) -> np.ndarray:
+    """Effector speed along the main direction of the trial's movement, so sideways wobble can't move the cut."""
     vel = np.gradient(traj[:, e], axis=0) * fps
     speed = np.linalg.norm(vel, axis=1)
-    p, last = int(np.argmax(speed)), len(speed) - 1
-    on, off, cut_a, cut_b = _bounds(speed, onset_frac * speed[p], 0, p, last)
+    p = int(np.argmax(speed))
+    on, off, _, _ = _bounds(speed, onset_frac * speed[p], 0, p, len(speed) - 1)
     axis = traj[off, e] - traj[on, e]
-    if off > on and np.linalg.norm(axis) > 0:
-        along = np.abs(vel @ (axis / np.linalg.norm(axis)))
-        on, off, cut_a, cut_b = _bounds(along, onset_frac * along[p], 0, p, last)
-    if cut_a or cut_b or off - on < 3:
+    n = float(np.linalg.norm(axis))
+    return np.abs(vel @ (axis / n)) if off > on and n > 0 else speed
+
+
+def cut_trial(along: np.ndarray, thr: float, onset: int | None = None) -> tuple[int, int] | None:
+    """Onset and offset where `along` crosses thr, or None if the movement runs off either end.
+
+    thr must be the same for every trial. Scaled to each trial's own peak, it
+    puts the onset later in trials with a large second movement (a
+    correction), and on a clock-time comparison that alone looks like a
+    change in path.
+    """
+    big = np.flatnonzero(along > max(0.5 * along.max(), thr))
+    if not big.size:
         return None
-    return on, off
+    first, last = int(big[0]), int(big[-1])
+    if onset is None:
+        below = np.flatnonzero(along[: first + 1] < thr)
+        if not below.size:
+            return None
+        onset = int(below[-1])
+    after = np.flatnonzero(along[last:] < thr)
+    if not after.size or last + int(after[0]) - onset < 3:
+        return None
+    return onset, last + int(after[0])
+
+
+def onset_threshold(trials, e: int, onset_frac: float = 0.1, cutoff: float | None = None) -> float:
+    """onset_frac times the median peak main-axis speed over the trials."""
+    peaks = []
+    for t, traj in trials:
+        prep = _prepare(t, traj, cutoff)
+        if prep is not None:
+            peaks.append(main_axis_speed(prep[1], prep[2], e, onset_frac).max())
+    if not peaks:
+        raise SystemExit("no usable trials")
+    return onset_frac * float(np.median(peaks))
 
 
 def reps_from_trials(name: str, trials: list[tuple[np.ndarray, np.ndarray]], joints: list[str],
                      effector: str, unit: str, *, cut: bool = True, onset_frac: float = 0.1,
-                     cutoff: float | None = None, trial_ids: list[int] | None = None) -> tuple[Reps, list[int]]:
-    """Build Reps from (t seconds, positions (n, J, 2)) trials. Returns (reps, ids of trials dropped)."""
+                     thr: float | None = None, onset_at_zero: bool = False, cutoff: float | None = None,
+                     trial_ids: list[int] | None = None) -> tuple[Reps, list[int]]:
+    """Build Reps from (t seconds, positions (n, J, 2)) trials. Returns (reps, ids of trials dropped).
+
+    thr is the onset threshold in units/s. Leave it out to take it from these
+    trials; import_csv passes one value for every condition in the file.
+    """
     e = joints.index(effector)
+    if cut and thr is None:
+        thr = onset_threshold(trials, e, onset_frac, cutoff)
     pieces, onsets, offsets, ids, dropped, fps_all = [], [], [], [], [], []
     for k, (t, traj) in enumerate(trials):
         tid = trial_ids[k] if trial_ids else k + 1
-        t, traj, fps = to_uniform(np.asarray(t, float), np.asarray(traj, float))
-        if np.isnan(traj).any():
+        prep = _prepare(t, traj, cutoff)
+        if prep is None:
             dropped.append(tid)
             continue
-        traj = lowpass(traj, fps, cutoff)
-        window = cut_trial(traj, fps, e, onset_frac) if cut else (0, len(traj) - 1)
+        t, traj, fps = prep
+        if cut:
+            zero = int(np.searchsorted(t, 0.0)) if onset_at_zero else None
+            window = cut_trial(main_axis_speed(traj, fps, e, onset_frac), thr, zero)
+        else:
+            window = (0, len(traj) - 1)
         if window is None:
             dropped.append(tid)
             continue
@@ -102,18 +153,24 @@ def read_csv(path: Path) -> tuple[dict[str, dict[int, tuple[np.ndarray, np.ndarr
 
 
 def import_csv(path: Path, out_dir: Path, *, unit: str, effector: str | None = None, cut: bool = True,
-               onset_frac: float = 0.1, cutoff: float | None = None) -> dict[str, Path]:
+               onset_frac: float = 0.1, onset_at_zero: bool = False, cutoff: float | None = None) -> dict[str, Path]:
     data, joints = read_csv(path)
     effector = effector or joints[0]
     if effector not in joints:
         raise SystemExit(f"effector {effector!r} not in joints {joints}")
+    thr = None
+    if cut:
+        every = [tr for trials in data.values() for tr in trials.values()]
+        thr = onset_threshold(every, joints.index(effector), onset_frac, cutoff)
+        print(f"onset threshold: {thr:.3g} {unit}/s ({100 * onset_frac:.0f}% of the median peak speed, all trials)")
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     written = {}
     for cond, trials in data.items():
         ids = sorted(trials)
         reps, dropped = reps_from_trials(cond, [trials[i] for i in ids], joints, effector, unit, cut=cut,
-                                         onset_frac=onset_frac, cutoff=cutoff, trial_ids=ids)
+                                         onset_frac=onset_frac, thr=thr, onset_at_zero=onset_at_zero,
+                                         cutoff=cutoff, trial_ids=ids)
         reps.save(out_dir / f"{cond}.reps.npz")
         written[cond] = out_dir / f"{cond}.reps.npz"
         note = f", dropped trials {dropped}" if dropped else ""

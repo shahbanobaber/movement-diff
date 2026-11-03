@@ -184,21 +184,28 @@ def segment(
     peaks, _ = find_peaks(speed, height=height, prominence=0.5 * height,
                           distance=max(1, int(round(min_sep_s * fps))))
 
+    def right_way(p):
+        v = vel[max(p - 2, 0) : p + 3].mean(axis=0)
+        return {"forward": v[0] > 0, "backward": v[0] < 0, "up": v[1] > 0, "down": v[1] < 0, "any": True}[stroke]
+
+    # One onset threshold for every rep in the session. Scaled to each rep's own
+    # peak, it would cut faster reps later into their movement, and that alone
+    # looks like a change in path (seen on real data, see validation/README.md).
+    strokes = [p for p in peaks if right_way(p)]
+    cut_thr = onset_frac * float(np.median(speed[strokes])) if strokes else 0.0
+
     diag = Diagnostics(t=t, speed=speed, effector_xy=norm[:, e], threshold=height)
     T = len(t)
     number = 0
     for k, p in enumerate(peaks):
-        v = vel[max(p - 2, 0) : p + 3].mean(axis=0)
-        direction = {"forward": v[0] > 0, "backward": v[0] < 0, "up": v[1] > 0,
-                     "down": v[1] < 0, "any": True}[stroke]
-        if not direction:
+        if not right_way(p):
             continue
         number += 1
         prev = peaks[k - 1] if k > 0 else 0
         nxt = peaks[k + 1] if k + 1 < len(peaks) else T - 1
         status, reason = "kept", ""
 
-        onset, offset, cut_start, cut_end = _bounds(speed, onset_frac * speed[p], prev, p, nxt)
+        onset, offset, cut_start, cut_end = _bounds(speed, cut_thr, prev, p, nxt)
         if onset_axis == "main" and offset > onset:
             # Second pass on speed along the rep's main direction, so sideways
             # wobble at the start or end (which is what more variability looks
@@ -206,7 +213,7 @@ def segment(
             axis = norm[offset, e] - norm[onset, e]
             if np.linalg.norm(axis) > 0:
                 along = np.abs(vel @ (axis / np.linalg.norm(axis)))
-                onset, offset, cut_start, cut_end = _bounds(along, onset_frac * along[p], prev, p, nxt)
+                onset, offset, cut_start, cut_end = _bounds(along, cut_thr, prev, p, nxt)
         if cut_start:
             status, reason = "rejected", "starts before the video"
         if cut_end:

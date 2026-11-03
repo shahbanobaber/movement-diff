@@ -39,7 +39,7 @@ It was tested on a simulated arm with known changes planted in the test session.
 | Path bends in the middle of the reach | Shift of about 2 cm in the mid phase, nearly 4× the noise floor (p<0.001). Nothing early or late. |
 | Extra wobble at the start | Spread doubled early (p<0.001), normal elsewhere |
 | Slower reaches | Movement time +0.09 s (p<0.001) |
-| Same endpoint | No endpoint change (p=0.54) |
+| Same endpoint | No endpoint change (p=0.52) |
 
 The last row is the point. A score based on where the reach ends sees nothing, yet the movement changed in two ways.
 
@@ -51,19 +51,23 @@ Testing also chose the alignment method and caught three bugs that would have pr
 
 ## On real VR data
 
-A simulated arm only shows the method recovers what I planted. To check it on real people, I used a public dataset (Furmanek et al., 2022, CC0). People reached for a virtual object in an Oculus Rift while their hand was tracked by motion capture. On some reaches, the object jumped from 20 cm to 40 cm away at a set moment.
+A simulated arm only shows the method recovers what I planted. To check it on real people, I used a public dataset (Furmanek et al., 2022, CC0). Ten people reached for a virtual object in an Oculus Rift while motion capture tracked the hand. On some reaches the object jumped from 20 cm to 40 cm away, 100, 200 or 300 ms after the reach began.
 
-Because the jump time is known, the answer is too. The jumped reaches should match normal reaches until after the jump, then pull away. The table compares the tool with a plain analysis of the raw data, which uses no alignment at all. Data is from one participant: 89 normal reaches and 14 to 16 jumped reaches per jump time.
+The jump time is known, so the answer is too. Jumped reaches should match normal ones until after the jump, then pull away, and later jumps should show up later. The reference is a plain analysis of the raw positions on the dataset's own clock, with no alignment at all.
 
-| Object jumped at | Raw data separates at | Tool, `--align-on onset` | Tool, default DTW |
+![When each method says the hand changed course, 10 people](results/furmanek2022/timing_all.png)
+
+| | Raw data | Tool, `--align-on onset` | Tool, default DTW |
 |---|---|---|---|
-| 100 ms | 410 ms | 376 ms | 63 ms |
-| 200 ms | 490 ms | 474 ms | 68 ms |
-| 300 ms | 570 ms | 555 ms | 144 ms |
+| Change found before the object moved (of 30) | 0 | 1 | 11 |
+| Later jump read later (of 10 people) | 9 | 9 | 0 |
+| Fires on random halves of normal reaches | 4% | 4% | |
 
-![When the shift rises above noise for each jump time](results/furmanek2022/P1/timing.png)
+- **Comparing reps at the same milliseconds after onset works.** It gets the order right and almost never reads a change too early. It reads changes a median of 70 ms earlier than the raw data, partly because lining each reach up on its own start narrows the noise band. Given the dataset's own onset times instead, it matches the raw data within 12 ms in 29 of 30 cases.
+- **The default DTW fails here.** Jumped reaches took 1.4 to 2.3 times as long, so the same percentage of the movement is a different moment in each. The tool warns when durations differ by more than 25% and points to `--align-on onset`.
+- **Going from one person to ten found a bug.** The onset threshold was scaled to each reach's own peak speed, so the faster corrective reaches were cut later and the tool read changes up to 350 ms too early. It's fixed, and a test covers it.
 
-Comparing reps at the same milliseconds after onset gets the timing right, within 35 ms of the raw data, and in the right order. The default does not. Jumped reaches took twice as long as normal ones, so on a 0-100% timeline the same percentage is a different moment in each, and the tool reported a change before the object had moved. The simulated arm never showed this because its conditions differed by only 15% in duration. The tool now warns when durations differ by more than 25% and points to `--align-on onset`.
+Details and every participant are in [validation/](validation/README.md#real-vr-data).
 
 ## The experiment
 
@@ -102,11 +106,16 @@ Check the segmentation plots in `trajectories/` before analysing. `--unit-cm` is
 From a CSV of positions instead, with columns `condition,trial,t,joint,x,y`:
 
 ```bash
-python -m movediff import positions.csv --unit cm --effector wrist
+python -m movediff import positions.csv --unit cm --effector wrist   # --onset-at-zero if t=0 marks onset
 python -m movediff analyse --baseline trajectories/<a>.reps.npz --test trajectories/<b>.reps.npz
 ```
 
-To rerun the real-data check, download `Small_Subset.zip` from the [dataset page](https://doi.org/10.6084/m9.figshare.13377506.v2), unzip it into `data/furmanek2022/`, and run `python validation/furmanek2022.py data/furmanek2022/Small_Subset/Dist_Pert/P1`.
+To rerun the real-data check, which downloads about 110 MB of the 2.9 GB [dataset](https://doi.org/10.6084/m9.figshare.13377506.v2):
+
+```bash
+python validation/fetch_furmanek2022.py
+python validation/furmanek2022.py data/furmanek2022/Full_Dataset/Dist_Pert/P*
+```
 
 ## Limits
 
@@ -116,7 +125,7 @@ To rerun the real-data check, download `Small_Subset.zip` from the [dataset page
 - **No control block yet.** Practice or fatigue could explain a difference. The protocol includes a control.
 - **Many comparisons, uncorrected p-values.** The protocol fixes one primary measure before recording.
 - **The simulation tests the method, not the tracking.** It can't show that MediaPipe follows a real arm well. The overlay video is the check for that.
-- **The timeline depends on the comparison.** DTW suits two versions of the same movement. When one condition takes much longer, use `--align-on onset`. The real-data check covers one participant and one kind of change.
+- **The timeline depends on the comparison.** DTW suits two versions of the same movement. When one condition takes much longer, use `--align-on onset`. The real-data check covers ten people and one kind of change, a jump in target distance, and on it the tool reads timing about 70 ms early.
 
 ## References
 

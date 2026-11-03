@@ -57,7 +57,10 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--out-dir", type=Path, default=Path("trajectories"))
     p.add_argument("--effector", help="joint that defines the movement (default: first joint in the file)")
     p.add_argument("--no-cut", action="store_true", help="trials already start and end with the movement")
-    p.add_argument("--onset-frac", type=float, default=0.1)
+    p.add_argument("--onset-frac", type=float, default=0.1,
+                   help="onset threshold as a fraction of the median peak speed over all trials")
+    p.add_argument("--onset-at-zero", action="store_true",
+                   help="t=0 in each trial is movement onset (start switch, logged event); find only the end")
     p.add_argument("--cutoff", type=float, help="optional low-pass cutoff in Hz")
 
     p = sub.add_parser("analyse", help="compare sessions -> metrics.json, summary.md, figures")
@@ -99,7 +102,7 @@ def main(argv: list[str] | None = None) -> None:
         from .tabular import import_csv
 
         import_csv(a.csv, a.out_dir, unit=a.unit, effector=a.effector, cut=not a.no_cut,
-                   onset_frac=a.onset_frac, cutoff=a.cutoff)
+                   onset_frac=a.onset_frac, onset_at_zero=a.onset_at_zero, cutoff=a.cutoff)
     elif a.cmd == "analyse":
         from .analyse import analyse
 
