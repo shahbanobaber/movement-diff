@@ -4,12 +4,14 @@ Measures how a person's movement changes between two conditions, from ordinary p
 
 ## Why
 
-VR training research usually judges skill transfer by scores: hits, accuracy, completion time. A score can show that performance dropped after VR practice. It can't show what went wrong in the movement.
+Headsets get depth wrong. Reaching for targets along the depth axis is slower and less accurate in VR than in the physical world (Barrera Machuca & Stuerzlinger, 2019). Practise a reach in a headset and your arm may learn that wrong depth, then carry it back into the real world.
 
-Take two players whose scores dropped by the same amount:
+Studies of this usually measure outcomes: movement time, error, hits. An outcome can show that performance dropped. It can't show what went wrong in the movement.
 
-- **Player A** swings as before until the last moment, then stops a few centimetres short every time. The arm has learned the headset's depth error. The fix is in the headset.
-- **Player B** is right on average but different every time. The fix is in the training.
+Take two people whose accuracy dropped by the same amount after VR practice:
+
+- **Person A** reaches as before until the last moment, then stops a few centimetres short every time. The arm has learned the headset's depth error. The fix is in the headset.
+- **Person B** is right on average but different every time. The fix is in the training.
 
 Same score, opposite fixes. movement-diff tells them apart by comparing the whole path of the movement, not just the result, and splitting the change in two:
 
@@ -18,6 +20,8 @@ mean squared distance from baseline = shift² + spread²
 ```
 
 **Shift** is how far the average movement moved. **Spread** is how inconsistent the reps became. Both are reported per joint and per phase of the movement: early, mid and late.
+
+Motion capture can measure whole movements too, but it needs a lab. movement-diff needs one phone camera. Filmed from the side, it sees the forward-back axis of a reach, which is the depth axis where headsets cause the most trouble.
 
 ## How it works
 
@@ -90,6 +94,7 @@ Check the segmentation plots in `trajectories/` before analysing. `--unit-cm` is
 
 ## References
 
+- Barrera Machuca, M., & Stuerzlinger, W. (2019). The effect of stereo display deficiencies on virtual hand pointing. *Proceedings of the CHI Conference on Human Factors in Computing Systems*.
 - Bazarevsky, V., et al. (2020). BlazePose: On-device real-time body pose tracking. arXiv:2006.10204.
 - Flash, T., & Hogan, N. (1985). The coordination of arm movements: an experimentally confirmed mathematical model. *Journal of Neuroscience*, 5(7), 1688-1703.
 - Keogh, E. J., & Pazzani, M. J. (2001). Derivative dynamic time warping. *SIAM International Conference on Data Mining*.
