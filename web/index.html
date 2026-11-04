@@ -4,54 +4,146 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Movement diff</title>
-<meta name="description" content="Record a few reaches, change one thing, record again, and see where your movement shifted and whether it got less steady.">
-<link rel="icon" href="data:,">
+<meta name="description" content="Reach for a spot with your eyes open, then closed. See where your movement drifted and whether it got shakier. Free, private, in your browser.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M5 26 C 12 22, 18 14, 27 6' stroke='%232a78d6' stroke-width='4' fill='none' stroke-linecap='round'/><path d='M5 26 C 10 16, 22 18, 27 6' stroke='%23eb6834' stroke-width='4' fill='none' stroke-linecap='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.16/dist/plot.umd.min.js"></script>
 </head>
 <body>
-<header class="wrap">
-  <h1>Movement diff</h1>
-  <p class="lede">Reach for a spot 8 times. Close your eyes and do it 8 more. See what changed.</p>
-  <p class="meta">Runs in your browser. Your video never leaves your device.</p>
+<div class="glow" aria-hidden="true"></div>
+
+<header class="nav wrap">
+  <a class="brand" href="#">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 26 C 12 22, 18 14, 27 6" class="ln-a"/><path d="M5 26 C 10 16, 22 18, 27 6" class="ln-b"/></svg>
+    Movement diff
+  </a>
+  <a class="nav-cta" href="#try">Try it</a>
 </header>
 
-<main class="wrap">
-  <section class="howto" aria-label="What to do">
-    <svg class="figure" viewBox="0 0 160 110" role="img" aria-label="A seated person reaching forward to a dot and bringing the hand back">
-      <line class="chair" x1="38" y1="80" x2="74" y2="80"/>
-      <line class="chair" x1="40" y1="80" x2="40" y2="104"/>
-      <circle class="body" cx="60" cy="20" r="9"/>
-      <line class="body" x1="60" y1="30" x2="58" y2="76"/>
-      <polyline class="body" points="58,76 86,78 86,104"/>
-      <circle class="spot" cx="123" cy="38" r="4.5"/>
-      <g class="upper">
-        <line class="arm" x1="60" y1="38" x2="90" y2="38"/>
-        <g class="fore">
-          <line class="arm" x1="90" y1="38" x2="117" y2="38"/>
-          <circle class="hand" cx="117" cy="38" r="3.5"/>
-        </g>
+<section class="hero wrap">
+  <div class="hero-copy">
+    <p class="chip">Free · Private · Runs in your browser</p>
+    <h1>See how your movement <span class="hl">changes</span>.</h1>
+    <p class="sub">Reach for a spot with your eyes open, then closed. Movement diff shows where your reach drifted, and whether it got shakier.</p>
+    <div class="cta">
+      <a class="btn primary" href="#try">Try it now</a>
+      <button class="btn ghost" id="example">See an example</button>
+    </div>
+  </div>
+  <div class="hero-art" aria-hidden="true">
+    <svg viewBox="0 0 340 280">
+      <defs>
+        <radialGradient id="spot" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="var(--a)" stop-opacity=".35"/><stop offset="100%" stop-color="var(--a)" stop-opacity="0"/></radialGradient>
+      </defs>
+      <circle cx="300" cy="58" r="34" fill="url(#spot)"/>
+      <circle cx="300" cy="58" r="7" class="target"/>
+      <g class="faint a">
+        <path pathLength="1" d="M42 236 C 134 208, 214 134, 298 62"/>
+        <path pathLength="1" d="M38 244 C 126 220, 206 146, 302 56"/>
+      </g>
+      <g class="faint b">
+        <path pathLength="1" d="M44 236 C 70 146, 198 104, 292 66"/>
+        <path pathLength="1" d="M36 244 C 54 164, 180 128, 280 84"/>
+        <path pathLength="1" d="M40 240 C 66 150, 186 122, 290 80"/>
+      </g>
+      <path pathLength="1" class="main a" d="M40 240 C 130 214, 210 140, 300 58"/>
+      <path pathLength="1" class="main b" d="M40 240 C 62 156, 190 116, 286 74"/>
+      <circle cx="40" cy="240" r="6" class="start"/>
+      <g class="tag t-a"><rect x="200" y="178" width="92" height="26" rx="13"/><text x="246" y="195">eyes open</text></g>
+      <g class="tag t-b"><rect x="30" y="98" width="102" height="26" rx="13"/><text x="81" y="115">eyes closed</text></g>
+      <g class="note">
+        <path d="M150 142 V 177" />
+        <path d="M146 147 l4 -5 l4 5 M146 172 l4 5 l4 -5" />
+        <text x="160" y="164">drift</text>
       </g>
     </svg>
-    <ol>
-      <li><b>Sit side-on</b> to the camera, whole arm in view.</li>
-      <li><b>Pick a spot</b> in front of you at shoulder height, like a mark on the wall.</li>
-      <li><b>Reach</b> from your lap to touch it, then back to your lap. Pause. That's one.</li>
-    </ol>
-  </section>
+  </div>
+</section>
 
-  <section class="recorder">
-    <div class="stage" id="stage">
-      <video id="video" playsinline muted></video>
-      <canvas id="overlay"></canvas>
-      <div class="placeholder" id="placeholder">Camera off</div>
+<section class="why wrap">
+  <h2>A score says you missed. <span class="muted">This shows how.</span></h2>
+  <div class="cards">
+    <article class="card">
+      <div class="icon i-a"><svg viewBox="0 0 24 24"><path d="M3 18 C 8 16, 12 10, 21 5"/><circle cx="12" cy="11.5" r="2.6"/></svg></div>
+      <h3>Where it changed</h3>
+      <p>At the start, the middle or the end of the movement.</p>
+    </article>
+    <article class="card">
+      <div class="icon i-b"><svg viewBox="0 0 24 24"><path d="M3 17 C 8 15, 13 9, 21 5"/><path d="M3 20 C 9 18, 14 13, 21 9"/><path d="M3 14 C 7 11, 12 6, 21 2" opacity=".5"/></svg></div>
+      <h3>Drift or wobble</h3>
+      <p>Did your reach move somewhere new, or just get less consistent?</p>
+    </article>
+    <article class="card">
+      <div class="icon i-c"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="11" rx="3"/><path d="M16 11 l5 -3 v9 l-5 -3z"/></svg></div>
+      <h3>Just a camera</h3>
+      <p>No sensors, no lab. Your video stays on your device.</p>
+    </article>
+  </div>
+  <p class="for">Useful wherever people learn a movement through a screen:</p>
+  <div class="chips">
+    <span>VR and games</span><span>Physio and rehab</span><span>Sport and dance</span><span>Movement research</span>
+  </div>
+</section>
+
+<section class="how wrap">
+  <h2>Three steps, two minutes</h2>
+  <ol class="steps-row">
+    <li><span class="n">1</span><b>Pick a spot</b><span>Sit side-on to your camera. Choose a mark on the wall at shoulder height.</span></li>
+    <li><span class="n">2</span><b>Reach 8 times, twice</b><span>Eyes open, then eyes closed. It beeps after each one.</span></li>
+    <li><span class="n">3</span><b>See what changed</b><span>Your two sets, side by side.</span></li>
+  </ol>
+</section>
+
+<main class="wrap" id="try">
+  <section class="studio">
+    <div class="studio-head">
+      <h2>Try it</h2>
+      <ol class="pills" id="steps">
+        <li data-step="1">Set 1 · eyes open</li>
+        <li data-step="2">Set 2 · eyes closed</li>
+        <li data-step="3">Results</li>
+      </ol>
     </div>
-    <p class="status" id="status">Press start, then do 8 with your eyes open.</p>
-    <div class="buttons">
-      <button class="primary" id="main">Start camera</button>
-      <button id="sample">Try sample data</button>
-      <button id="reset" hidden>Start over</button>
+    <div class="studio-body">
+      <aside class="howto" aria-label="The movement">
+        <svg class="figure" viewBox="0 0 160 110" role="img" aria-label="A seated person reaching forward to a dot and bringing the hand back">
+          <line class="chair" x1="38" y1="80" x2="74" y2="80"/>
+          <line class="chair" x1="40" y1="80" x2="40" y2="104"/>
+          <circle class="body" cx="60" cy="20" r="9"/>
+          <line class="body" x1="60" y1="30" x2="58" y2="76"/>
+          <polyline class="body" points="58,76 86,78 86,104"/>
+          <circle class="spot" cx="123" cy="38" r="4.5"/>
+          <g class="upper">
+            <line class="arm" x1="60" y1="38" x2="90" y2="38"/>
+            <g class="fore">
+              <line class="arm" x1="90" y1="38" x2="117" y2="38"/>
+              <circle class="hand" cx="117" cy="38" r="3.5"/>
+            </g>
+          </g>
+        </svg>
+        <p>Hand in your lap. Reach out to touch your spot, then back. Pause. That's one.</p>
+      </aside>
+      <div class="cam">
+        <div class="stage" id="stage">
+          <video id="video" playsinline muted></video>
+          <canvas id="overlay"></canvas>
+          <div class="placeholder" id="placeholder">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="13" height="11" rx="3"/><path d="M16 11 l5 -3 v9 l-5 -3z"/></svg>
+            <span>Camera off</span>
+          </div>
+        </div>
+        <div class="dots" id="dots" aria-hidden="true"></div>
+        <p class="status" id="status">Press start, then do 8 with your eyes open.</p>
+        <div class="buttons">
+          <button class="btn primary" id="main">Start camera</button>
+          <button class="btn ghost" id="sample">Try sample data</button>
+          <button class="btn ghost" id="reset" hidden>Start over</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -59,11 +151,11 @@
     <h2 id="headline"></h2>
     <div class="tiles" id="tiles"></div>
     <div class="pair">
-      <div>
+      <div class="panel">
         <h3>Your reaches</h3>
-        <div class="chart" id="paths" role="img" aria-label="Wrist paths, first set and second set"></div>
+        <div class="chart" id="paths" role="img" aria-label="Wrist paths, set 1 and set 2"></div>
       </div>
-      <div>
+      <div class="panel">
         <h3>Where they differ</h3>
         <div class="chart" id="shift" role="img" aria-label="Distance between the two average paths along the movement, with the range chance alone gives"></div>
       </div>
@@ -72,7 +164,9 @@
 </main>
 
 <footer class="wrap">
-  <a href="https://github.com/shahbanobaber/movement-diff">Method, tests and references</a> · Pose tracking by MediaPipe · Shahbano Baber
+  <span>Made by Shahbano Baber</span>
+  <a href="https://github.com/shahbanobaber/movement-diff">How it works, code and tests</a>
+  <span>Pose tracking by MediaPipe</span>
 </footer>
 <script type="module" src="app.js"></script>
 </body>

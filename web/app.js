@@ -14,6 +14,16 @@ const video = $("video"), canvas = $("overlay"), ctx = canvas.getContext("2d");
 const st = { phase: "off", frames: { A: [], B: [] }, side: null, count: 0, landmarker: null, lastVideoTime: -1, timer: null };
 
 function say(text) { $("status").textContent = text; }
+function setStep(n) {
+  document.querySelectorAll("#steps li").forEach(li => {
+    const k = +li.dataset.step; li.classList.toggle("active", k === n); li.classList.toggle("done", k < n);
+  });
+}
+function setDots(n, set) {
+  const d = $("dots");
+  d.className = `dots ${set === "B" ? "b" : "a"}`;
+  d.innerHTML = Array.from({ length: TARGET }, (_, i) => `<span class="${i < n ? "on" : ""}"></span>`).join("");
+}
 function button(label, onClick, disabled = false) {
   const b = $("main"); b.textContent = label; b.onclick = onClick; b.disabled = disabled;
 }
@@ -80,6 +90,7 @@ function draw(lm, w, h) {
 // ---------- recording ----------
 function ready(set) {
   st.phase = `ready${set}`;
+  setStep(set === "A" ? 1 : 2); setDots(0, set);
   say(set === "A" ? `Eyes open: reach to your spot and back, ${TARGET} times.` : `Now eyes closed: reach to the same spot, ${TARGET} times. It beeps each one.`);
   button(set === "A" ? "Record set 1" : "Record set 2", () => record(set));
   $("reset").hidden = false;
@@ -95,12 +106,12 @@ function countReps(set) {
 }
 
 function record(set) {
-  st.frames[set] = []; st.count = 0; st.phase = set;
+  st.frames[set] = []; st.count = 0; st.phase = set; setDots(0, set);
   say(`Set ${set === "A" ? 1 : 2}: 0 of ${TARGET}`);
   button("Stop", () => stop(set));
   st.timer = setInterval(() => {
     const n = countReps(set);
-    if (n > st.count) { st.count = n; beep(); say(`Set ${set === "A" ? 1 : 2}: ${Math.min(n, TARGET)} of ${TARGET}`); }
+    if (n > st.count) { st.count = n; beep(); setDots(Math.min(n, TARGET), set); say(`Set ${set === "A" ? 1 : 2}: ${Math.min(n, TARGET)} of ${TARGET}`); }
     if (n >= TARGET) stop(set);
   }, 400);
 }
@@ -121,7 +132,7 @@ function stop(set) {
   }
   st[`reps${set}`] = reps.slice(0, TARGET + 4).map(r => r.frames);
   if (set === "A") ready("B");
-  else { st.phase = "done"; say("Done."); button("Record again", () => { st.side = null; ready("A"); }); show(st.repsA, st.repsB); }
+  else { st.phase = "done"; setStep(3); say("Done. Here's what changed."); button("Record again", () => { st.side = null; ready("A"); }); show(st.repsA, st.repsB); }
 }
 
 // ---------- results ----------
@@ -150,7 +161,7 @@ function show(A, B, label) {
 }
 
 function draw2(res) {
-  const style = { background: "transparent", color: css("--ink2"), fontSize: "12px" };
+  const style = { background: "transparent", color: css("--ink2"), fontSize: "12px", fontFamily: "Inter, system-ui, sans-serif" };
   const sets = [["set 1", res.alignedA, res.meanA, css("--a")], ["set 2", res.alignedB, res.meanB, css("--b")]];
   const faint = sets.flatMap(([name, reps]) => reps.flatMap((r, k) => r.map(([x, y], i) => ({ name, k, i, x, y }))));
   const means = sets.flatMap(([name, , mean]) => mean.map(([x, y], i) => ({ name, i, x, y })));
@@ -169,7 +180,7 @@ function draw2(res) {
   const curve = res.curve.shift.map((s, i) => ({ u: i / (res.curve.shift.length - 1), s: 100 * s, n: 100 * res.curve.null95[i] }));
   const sel = $("shift");
   sel.replaceChildren(Plot.plot({
-    width: sel.clientWidth, height: Math.max(220, sel.clientWidth * 0.75), style, marginLeft: 40,
+    width: sel.clientWidth, height: Math.max(240, sel.clientWidth * 0.95), style, marginLeft: 40,
     x: { label: "Through the reach →", tickFormat: "%", domain: [0, 1] },
     y: { label: "↑ % of arm length", grid: true },
     marks: [
@@ -184,10 +195,13 @@ function draw2(res) {
 
 // ---------- wiring ----------
 $("main").onclick = startCamera;
-$("sample").onclick = async () => {
+async function sample() {
   const s = await (await fetch("sample.json")).json();
-  show(s.A, s.B, "Sample");
-};
+  show(s.A, s.B, "Example");
+}
+$("sample").onclick = sample;
+$("example").onclick = sample;
+setStep(1); setDots(0, "A");
 $("reset").onclick = () => { clearInterval(st.timer); st.side = null; st.frames = { A: [], B: [] }; $("results").hidden = true; ready("A"); };
 
 const theme = new URLSearchParams(location.search).get("theme");
