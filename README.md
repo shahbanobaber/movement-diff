@@ -28,7 +28,7 @@ Motion capture can measure whole movements too, but it needs a lab. movement-dif
 1. **Pose.** MediaPipe marks shoulder, elbow, wrist and finger in every frame, on a laptop CPU. If positions already come from a headset, motion capture or a tablet, `movediff import` reads them from a CSV and this step is skipped.
 2. **Reps.** Wrist speed is used to cut the video into reps. Positions are measured from the shoulder and scaled by torso length, so where the person sat doesn't matter.
 3. **Alignment.** No two reps take the same time. Dynamic time warping lines them up so the same moment of the movement is compared across reps.
-4. **Comparison.** At each point along the movement it computes shift and spread against baseline, plus endpoint, movement time and speed. Each number is checked against a noise floor from 2000 label shuffles, so differences that luck alone would produce aren't reported as findings.
+4. **Comparison.** At each point along the movement it computes shift and spread against baseline, plus endpoint, movement time and speed. Each number is checked against a noise floor from 2000 label shuffles (a permutation test; Ernst, 2004), so differences that luck alone would produce aren't reported as findings.
 
 ## Does it work?
 
@@ -129,12 +129,13 @@ python validation/furmanek2022.py data/furmanek2022/Full_Dataset/Dist_Pert/P*
 
 ## References
 
-- Barrera Machuca, M., & Stuerzlinger, W. (2019). The effect of stereo display deficiencies on virtual hand pointing. *Proceedings of the CHI Conference on Human Factors in Computing Systems*.
+- Barrera Machuca, M., & Stuerzlinger, W. (2019). The effect of stereo display deficiencies on virtual hand pointing. *Proceedings of the CHI Conference on Human Factors in Computing Systems*, 1-14. https://doi.org/10.1145/3290605.3300437
 - Bazarevsky, V., et al. (2020). BlazePose: On-device real-time body pose tracking. arXiv:2006.10204.
-- Flash, T., & Hogan, N. (1985). The coordination of arm movements: an experimentally confirmed mathematical model. *Journal of Neuroscience*, 5(7), 1688-1703.
-- Furmanek, M. P., Mangalam, M., Yarossi, M., Lockwood, K., & Tunik, E. (2022). A kinematic and EMG dataset of online adjustment of reach-to-grasp movements to visual perturbations. *Scientific Data*, 9, 23.
-- Keogh, E. J., & Pazzani, M. J. (2001). Derivative dynamic time warping. *SIAM International Conference on Data Mining*.
-- Krakauer, J. W., & Mazzoni, P. (2011). Human sensorimotor learning: adaptation, skill, and beyond. *Current Opinion in Neurobiology*, 21(4), 636-644.
-- Sakoe, H., & Chiba, S. (1978). Dynamic programming algorithm optimization for spoken word recognition. *IEEE Transactions on Acoustics, Speech, and Signal Processing*, 26(1), 43-49.
+- Ernst, M. D. (2004). Permutation methods: a basis for exact inference. *Statistical Science*, 19(4), 676-685. https://doi.org/10.1214/088342304000000396
+- Flash, T., & Hogan, N. (1985). The coordination of arm movements: an experimentally confirmed mathematical model. *Journal of Neuroscience*, 5(7), 1688-1703. https://doi.org/10.1523/JNEUROSCI.05-07-01688.1985
+- Furmanek, M. P., Mangalam, M., Yarossi, M., Lockwood, K., & Tunik, E. (2022). A kinematic and EMG dataset of online adjustment of reach-to-grasp movements to visual perturbations. *Scientific Data*, 9, 23. https://doi.org/10.1038/s41597-021-01107-2
+- Keogh, E. J., & Pazzani, M. J. (2001). Derivative dynamic time warping. *SIAM International Conference on Data Mining*, 1-11. https://doi.org/10.1137/1.9781611972719.1
+- Krakauer, J. W., & Mazzoni, P. (2011). Human sensorimotor learning: adaptation, skill, and beyond. *Current Opinion in Neurobiology*, 21(4), 636-644. https://doi.org/10.1016/j.conb.2011.06.012
+- Sakoe, H., & Chiba, S. (1978). Dynamic programming algorithm optimization for spoken word recognition. *IEEE Transactions on Acoustics, Speech, and Signal Processing*, 26(1), 43-49. https://doi.org/10.1109/TASSP.1978.1163055
 
 MIT license.
