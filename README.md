@@ -1,5 +1,9 @@
 # movement-diff
 
+[![tests](https://github.com/shahbanobaber/movement-diff/actions/workflows/tests.yml/badge.svg)](https://github.com/shahbanobaber/movement-diff/actions/workflows/tests.yml)
+
+**[Try it live →](https://movement-diff.vercel.app)** Record your own reaches in the browser. Nothing is uploaded.
+
 Measures how a person's movement changes between two conditions, from ordinary phone video. It reports where in the movement the change happens, how big it is, and whether it's a shift or a loss of consistency.
 
 ## Why
@@ -89,7 +93,10 @@ Pending.
 pip install -e ".[dev]"
 pytest
 python -m movediff demo            # simulated sessions -> results/synthetic/
+node --test web/tests/*.test.mjs   # the browser version matches this package
 ```
+
+The live page is `web/`: the same method in JavaScript, with MediaPipe running in the browser. Deploy with `npx vercel deploy --prod --cwd web`.
 
 On real video, one file per block:
 

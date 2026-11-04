@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Movement diff</title>
+<meta name="description" content="Record a few reaches, change one thing, record again, and see where your movement shifted and whether it got less steady.">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.16/dist/plot.umd.min.js"></script>
+</head>
+<body>
+<header class="wrap">
+  <h1>Movement diff</h1>
+  <p class="lede">Record 8 reaches. Close your eyes and record 8 more. See what changed.</p>
+  <p class="meta">Runs in your browser. Your video never leaves your device.</p>
+</header>
+
+<main class="wrap">
+  <section class="recorder">
+    <div class="stage" id="stage">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div class="placeholder" id="placeholder">Camera off</div>
+    </div>
+    <p class="status" id="status">Sit side-on to the camera with your whole arm in view.</p>
+    <div class="buttons">
+      <button class="primary" id="main">Start camera</button>
+      <button id="sample">Try sample data</button>
+      <button id="reset" hidden>Start over</button>
+    </div>
+  </section>
+
+  <section class="results" id="results" hidden>
+    <h2 id="headline"></h2>
+    <div class="tiles" id="tiles"></div>
+    <div class="pair">
+      <div>
+        <h3>Your reaches</h3>
+        <div class="chart" id="paths" role="img" aria-label="Wrist paths, first set and second set"></div>
+      </div>
+      <div>
+        <h3>Where they differ</h3>
+        <div class="chart" id="shift" role="img" aria-label="Distance between the two average paths along the movement, with the range chance alone gives"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <a href="https://github.com/shahbanobaber/movement-diff">Method, tests and references</a> · Pose tracking by MediaPipe · Shahbano Baber
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>
