@@ -80,7 +80,7 @@ function draw(lm, w, h) {
 // ---------- recording ----------
 function ready(set) {
   st.phase = `ready${set}`;
-  say(set === "A" ? `Reach forward and back, ${TARGET} times, eyes open.` : `Now close your eyes. ${TARGET} more. It beeps each reach.`);
+  say(set === "A" ? `Eyes open: reach to your spot and back, ${TARGET} times.` : `Now eyes closed: reach to the same spot, ${TARGET} times. It beeps each one.`);
   button(set === "A" ? "Record set 1" : "Record set 2", () => record(set));
   $("reset").hidden = false;
 }
@@ -115,7 +115,7 @@ function stop(set) {
   } catch { reps = []; }
   if (reps.length < 4) {
     st.phase = `ready${set}`;
-    say(`Only ${reps.length} reaches seen. Keep your arm in view and try again.`);
+    say(`Only ${reps.length} seen. Keep your whole arm in view, pause in your lap between reaches, and try again.`);
     button(set === "A" ? "Record set 1" : "Record set 2", () => record(set));
     return;
   }

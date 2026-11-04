@@ -32,6 +32,24 @@ h3 { font-size: 14px; color: var(--ink2); margin: 0 0 4px; font-weight: 600; }
 .meta { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
 a { color: var(--a); }
 
+.howto { display: flex; gap: 18px; align-items: center; margin: 0 0 18px; flex-wrap: wrap; }
+.howto .figure { width: 170px; flex: none; }
+.howto ol { margin: 0; padding-left: 20px; flex: 1; min-width: 220px; }
+.howto li { margin: 4px 0; }
+.figure .body, .figure .chair, .figure .arm { stroke-linecap: round; fill: none; }
+.figure .body { stroke: var(--ink2); stroke-width: 4; }
+.figure circle.body { fill: var(--ink2); stroke: none; }
+.figure .chair { stroke: var(--line); stroke-width: 4; }
+.figure .arm { stroke: var(--b); stroke-width: 5; }
+.figure .hand { fill: var(--b); }
+.figure .spot { fill: none; stroke: var(--a); stroke-width: 2.5; }
+.figure .upper, .figure .fore { transform-box: view-box; }
+.figure .upper { transform-origin: 60px 38px; animation: reach 3.2s ease-in-out infinite; }
+.figure .fore { transform-origin: 90px 38px; animation: bend 3.2s ease-in-out infinite; }
+@keyframes reach { 0%, 15% { transform: rotate(75deg); } 45%, 60% { transform: rotate(0deg); } 88%, 100% { transform: rotate(75deg); } }
+@keyframes bend { 0%, 15% { transform: rotate(-75deg); } 45%, 60% { transform: rotate(0deg); } 88%, 100% { transform: rotate(-75deg); } }
+@media (prefers-reduced-motion: reduce) { .figure .upper, .figure .fore { animation: none; } }
+
 .stage {
   position: relative; width: 100%; max-width: 640px; aspect-ratio: 4 / 3; background: #1a1b1e;
   border-radius: 12px; overflow: hidden; transform: scaleX(-1);   /* mirror, like a selfie camera */

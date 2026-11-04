@@ -13,18 +13,41 @@
 <body>
 <header class="wrap">
   <h1>Movement diff</h1>
-  <p class="lede">Record 8 reaches. Close your eyes and record 8 more. See what changed.</p>
+  <p class="lede">Reach for a spot 8 times. Close your eyes and do it 8 more. See what changed.</p>
   <p class="meta">Runs in your browser. Your video never leaves your device.</p>
 </header>
 
 <main class="wrap">
+  <section class="howto" aria-label="What to do">
+    <svg class="figure" viewBox="0 0 160 110" role="img" aria-label="A seated person reaching forward to a dot and bringing the hand back">
+      <line class="chair" x1="38" y1="80" x2="74" y2="80"/>
+      <line class="chair" x1="40" y1="80" x2="40" y2="104"/>
+      <circle class="body" cx="60" cy="20" r="9"/>
+      <line class="body" x1="60" y1="30" x2="58" y2="76"/>
+      <polyline class="body" points="58,76 86,78 86,104"/>
+      <circle class="spot" cx="123" cy="38" r="4.5"/>
+      <g class="upper">
+        <line class="arm" x1="60" y1="38" x2="90" y2="38"/>
+        <g class="fore">
+          <line class="arm" x1="90" y1="38" x2="117" y2="38"/>
+          <circle class="hand" cx="117" cy="38" r="3.5"/>
+        </g>
+      </g>
+    </svg>
+    <ol>
+      <li><b>Sit side-on</b> to the camera, whole arm in view.</li>
+      <li><b>Pick a spot</b> in front of you at shoulder height, like a mark on the wall.</li>
+      <li><b>Reach</b> from your lap to touch it, then back to your lap. Pause. That's one.</li>
+    </ol>
+  </section>
+
   <section class="recorder">
     <div class="stage" id="stage">
       <video id="video" playsinline muted></video>
       <canvas id="overlay"></canvas>
       <div class="placeholder" id="placeholder">Camera off</div>
     </div>
-    <p class="status" id="status">Sit side-on to the camera with your whole arm in view.</p>
+    <p class="status" id="status">Press start, then do 8 with your eyes open.</p>
     <div class="buttons">
       <button class="primary" id="main">Start camera</button>
       <button id="sample">Try sample data</button>
