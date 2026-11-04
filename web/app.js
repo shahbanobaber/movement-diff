@@ -154,9 +154,10 @@ function show(A, B, label) {
     [`${steadiest.ratio.toFixed(1)}×`, `as variable at the ${where[steadiest.name]}${chance(steadiest.pSpread)}`],
     [`${res.nA} + ${res.nB}`, "reaches compared"],
   ].map(([v, k]) => `<div class="tile"><div class="v">${v}</div><div class="k">${k}</div></div>`).join("");
-  $("results").hidden = false;
+  $("results").hidden = false; $("empty").hidden = true;
+  st.result = res;
+  go("results");               // show the tab first, so the charts get their real width
   draw2(res);
-  $("results").scrollIntoView({ behavior: "smooth", block: "start" });
   window.__lastResult = res;   // for the browser test
 }
 
@@ -201,6 +202,29 @@ async function sample() {
 }
 $("sample").onclick = sample;
 $("example").onclick = sample;
+$("example2").onclick = sample;
+
+// ---------- tabs ----------
+const VIEWS = ["overview", "try", "results", "about"];
+function route() {
+  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "overview";
+  document.querySelectorAll(".view").forEach(el => { el.hidden = el.dataset.view !== v; });
+  document.querySelectorAll("[data-nav]").forEach(a => a.setAttribute("aria-current", a.dataset.nav === v ? "page" : "false"));
+  if (v === "results") $("badge").hidden = true;
+  window.scrollTo(0, 0);
+}
+function go(v) {
+  if (location.hash !== `#${v}`) history.pushState(null, "", `#${v}`);
+  route();
+}
+window.addEventListener("hashchange", route);
+window.addEventListener("popstate", route);
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (st.result && !$("results").closest(".view").hidden) draw2(st.result); }, 150);
+});
+route();
 setStep(1); setDots(0, "A");
 $("reset").onclick = () => { clearInterval(st.timer); st.side = null; st.frames = { A: [], B: [] }; $("results").hidden = true; ready("A"); };
 
